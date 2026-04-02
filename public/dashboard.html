@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — TaskFlow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #060710;
+      --card:     #0d0e1c;
+      --border:   #191b2e;
+      --accent:   #4f8ef7;
+      --purple:   #a78bfa;
+      --text:     #e8eaf6;
+      --muted:    #4e5170;
+      --success:  #34d399;
+      --error:    #f87171;
+      --radius:   13px;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(79,142,247,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(79,142,247,.03) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+
+    .container {
+      position: relative; z-index: 10;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand-name { font-size: 20px; font-weight: 700; }
+    .brand-name span { color: var(--accent); }
+
+    .user-section { display: flex; align-items: center; gap: 15px; }
+    .user-info { text-align: right; }
+    .user-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .user-email { font-size: 12px; color: var(--muted); }
+    .avatar {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn-logout {
+      padding: 8px 16px;
+      background: rgba(248, 113, 113, 0.1);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: var(--error);
+      border-radius: var(--radius);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-logout:hover {
+      background: rgba(248, 113, 113, 0.2);
+    }
+
+    /* Welcome Card */
+    .welcome-card {
+      background: linear-gradient(135deg, rgba(79,142,247,.15), rgba(167,139,250,.15));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 40px;
+    }
+
+    .welcome-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .welcome-text {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Section Title */
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Task Grid */
+    .tasks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .task-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all .2s;
+    }
+
+    .task-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(79, 142, 247, .2);
+    }
+
+    .task-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .task-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .task-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .task-status.pending {
+      background: rgba(167, 139, 250, .2);
+      color: var(--purple);
+    }
+
+    .task-status.completed {
+      background: rgba(52, 211, 153, .2);
+      color: var(--success);
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid rgba(79,142,247,.2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .empty-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .empty-text {
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, var(--accent), #3a72e0);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 22px rgba(79,142,247,.28);
+      transition: all .2s;
+    }
+
+    .btn-primary:hover {
+      opacity: .88;
+      transform: translateY(-2px);
+    }
+
+    /* User Data Display */
+    .user-data {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 40px;
+    }
+
+    .user-data h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .data-value {
+      font-weight: 600;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg">
+    <div class="bg-grid"></div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-name">Task<span>Flow</span></div>
+      </div>
+      <div class="user-section">
+        <div class="user-info">
+          <div class="user-name" id="userName">User</div>
+          <div class="user-email" id="userEmail">user@example.com</div>
+        </div>
+        <div class="avatar" id="avatar">U</div>
+        <button class="btn-logout" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Welcome Card -->
+    <div class="welcome-card">
+      <h2 class="welcome-title">Welcome back, <span id="welcomeName">User</span>! 👋</h2>
+      <p class="welcome-text">Here's your task dashboard. Manage your tasks efficiently.</p>
+    </div>
+
+    <!-- User Data Verification -->
+    <div class="user-data">
+      <h3>Your Account Information</h3>
+      <div class="data-row">
+        <span class="data-label">Name</span>
+        <span class="data-value" id="displayName">-</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Email</span>
+        <span class="data-value" id="displayEmail">-</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Status</span>
+        <span class="data-value" style="color: var(--success);">✅ Verified</span>
+      </div>
+    </div>
+
+    <!-- Tasks Section -->
+    <h2 class="section-title">📋 Your Tasks</h2>
+    <div id="tasksContainer">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading your tasks...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // ✅ ON PAGE LOAD: Check if user is logged in
+    window.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        console.log("❌ No token found, redirecting to login...");
+        window.location.href = "login.html";
+        return;
+      }
+
+      // ✅ Load user data from localStorage
+      const userName = localStorage.getItem("userName") || "User";
+      const userEmail = localStorage.getItem("userEmail") || "user@example.com";
+      
+      document.getElementById("userName").textContent = userName;
+      document.getElementById("userEmail").textContent = userEmail;
+      document.getElementById("welcomeName").textContent = userName;
+      document.getElementById("displayName").textContent = userName;
+      document.getElementById("displayEmail").textContent = userEmail;
+      
+      // Set avatar initials
+      const initials = userName.split(" ").map(n => n[0]).join("").toUpperCase();
+      document.getElementById("avatar").textContent = initials;
+
+      console.log("✅ User loaded:", { userName, userEmail });
+
+      // ✅ Fetch tasks from backend
+      await loadTasks();
+    });
+
+    async function loadTasks() {
+      try {
+        console.log("📤 Fetching tasks...");
+        
+        const res = await apiFetch("/tasks", {
+          method: "GET"
+        });
+
+        if (!res) return; // apiFetch handles 401
+
+        const data = await res.json();
+        console.log("📨 Tasks:", data);
+
+        const container = document.getElementById("tasksContainer");
+        
+        if (!Array.isArray(data) || data.length === 0) {
+          // Empty state
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">📝</div>
+              <div class="empty-title">No tasks yet</div>
+              <div class="empty-text">You don't have any tasks. Create one to get started.</div>
+              <button class="btn-primary" onclick="alert('Create task feature coming soon!')">Create Task</button>
+            </div>
+          `;
+          return;
+        }
+
+        // Render tasks
+        container.innerHTML = data.map(task => `
+          <div class="task-card">
+            <div class="task-title">${task.title || "Untitled"}</div>
+            <div class="task-desc">${task.description || "No description"}</div>
+            <span class="task-status ${task.completed ? 'completed' : 'pending'}">
+              ${task.completed ? '✓ Completed' : '⏳ Pending'}
+            </span>
+          </div>
+        `).join("");
+
+      } catch (err) {
+        console.error("❌ Error loading tasks:", err);
+        document.getElementById("tasksContainer").innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-title">Error loading tasks</div>
+            <div class="empty-text">${err.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    function handleLogout() {
+      // ✅ Clear localStorage
+      localStorage.clear();
+      console.log("👋 Logged out, redirecting to login...");
+      // Redirect to login
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
